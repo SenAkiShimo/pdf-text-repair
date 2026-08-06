@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a reproducible problem
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Processing mode
+      options:
+        - Automatic
+        - Scanned book
+        - Broken text layer
+        - Mixed PDF
+        - Replace old OCR
+        - Readest layer only
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Mac model and architecture
+      placeholder: Apple Silicon or Intel
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Remove filenames, personal information, and document content before posting.
+      render: shell

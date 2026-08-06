@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>PDF Text Repair</title>
+  </head>
+  <body>
+    <main id="app" class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="app-mark" aria-hidden="true"><span>文</span></div>
+          <div>
+            <div class="brand-row"><h1>PDF Text Repair</h1><span class="version-pill">v0.2.2 beta</span></div>
+            <p>把扫描书、乱码文字层和普通 PDF 整理成 Readest 可连续朗读的版本。</p>
+          </div>
+        </div>
+        <div id="engineBadge" class="engine-badge checking">
+          <span class="status-dot"></span><span id="engineBadgeText">正在检查本地组件</span>
+        </div>
+      </header>
+
+      <nav class="step-strip" aria-label="处理步骤">
+        <div class="step active"><span>1</span><div><strong>选择文件</strong><small>自动分析 PDF</small></div></div>
+        <i></i>
+        <div class="step"><span>2</span><div><strong>确认方案</strong><small>调整朗读规则</small></div></div>
+        <i></i>
+        <div class="step"><span>3</span><div><strong>生成结果</strong><small>PDF、TXT 与报告</small></div></div>
+      </nav>
+
+      <section class="card file-card">
+        <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="选择 PDF 文件">
+          <div class="drop-illustration" aria-hidden="true">
+            <div class="sheet sheet-back"></div><div class="sheet sheet-front"><b>PDF</b><span>＋</span></div>
+          </div>
+          <div class="drop-copy">
+            <strong id="dropTitle">把 PDF 拖到这里</strong>
+            <span id="dropSubtitle">支持扫描图片书、乱码文字层、混合型 PDF 和已有正常文字的 PDF</span>
+          </div>
+          <button id="browseButton" class="button secondary" type="button">选择 PDF</button>
+        </div>
+        <div class="path-row">
+          <label class="path-field"><span>输入文件</span><input id="inputPath" readonly placeholder="尚未选择 PDF" /></label>
+          <label class="path-field output-field"><span>输出文件</span><div><input id="outputPath" placeholder="自动生成 -readest.pdf" /><button id="saveAsButton" class="button ghost" type="button">另存为</button></div></label>
+        </div>
+      </section>
+
+      <section class="main-grid">
+        <div class="left-column">
+          <section class="card analysis-card">
+            <div class="card-heading">
+              <div><span class="kicker">自动分析</span><h2>这份 PDF 应该怎样处理？</h2></div>
+              <button id="analyzeButton" class="button ghost small" type="button" disabled>重新分析</button>
+            </div>
+            <div id="analysisEmpty" class="analysis-empty">
+              <span class="radar-icon" aria-hidden="true"></span>
+              <div><strong>选择文件后自动抽样检测</strong><p>软件会检查页面数量、可提取文字、整页图像和异常字符，只读取少量代表页。</p></div>
+            </div>
+            <div id="analysisLoading" class="analysis-loading hidden">
+              <span class="spinner"></span><div><strong>正在分析 PDF 结构</strong><p>通常只需要几秒，不会进行整本 OCR。</p></div>
+            </div>
+            <div id="analysisResult" class="analysis-result hidden">
+              <div class="analysis-summary">
+                <div class="recommendation-icon" id="recommendationIcon">✓</div>
+                <div><span>推荐方案</span><strong id="recommendedMode">—</strong><p id="analysisSummary">—</p></div>
+                <div class="confidence"><span>判断置信度</span><b id="analysisConfidence">—</b></div>
+              </div>
+              <div class="metric-grid">
+                <div><span>总页数</span><strong id="metricPages">—</strong></div>
+                <div><span>抽样页</span><strong id="metricSamples">—</strong></div>
+                <div><span>有文字层</span><strong id="metricText">—</strong></div>
+                <div><span>无文字层</span><strong id="metricImage">—</strong></div>
+              </div>
+            </div>
+            <p id="analysisError" class="inline-warning hidden"></p>
+          </section>
+
+          <section class="card mode-card-shell">
+            <div class="card-heading">
+              <div><span class="kicker">处理方式</span><h2>选择转换方案</h2></div>
+              <span id="activeModeHint" class="soft-badge">等待分析</span>
+            </div>
+            <div class="mode-grid" role="radiogroup" aria-label="处理方式">
+              <label class="mode-option selected featured">
+                <input type="radio" name="mode" value="auto" checked />
+                <span class="mode-icon">A</span><span class="mode-copy"><strong>自动判断</strong><small>根据文件结构选择最安全的处理方式</small></span><em>推荐</em>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="mode" value="scan" />
+                <span class="mode-icon">扫</span><span class="mode-copy"><strong>扫描图片书</strong><small>PP-OCRv6 识别整页图片并重建朗读层</small></span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="mode" value="force" />
+                <span class="mode-icon">修</span><span class="mode-copy"><strong>彻底修复乱码文字层</strong><small>适合显示正常、复制或朗读却乱码的 PDF</small></span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="mode" value="skip" />
+                <span class="mode-icon">混</span><span class="mode-copy"><strong>混合型 PDF</strong><small>保留正常文字，只 OCR 缺少文字层的页面</small></span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="mode" value="reading" />
+                <span class="mode-icon">读</span><span class="mode-copy"><strong>仅整理 Readest 朗读层</strong><small>已有正常文字，不重新 OCR，只减少断续与乱序</small></span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="mode" value="redo" />
+                <span class="mode-icon">替</span><span class="mode-copy"><strong>替换旧 OCR 层</strong><small>重做旧隐藏识别层，尽量保留可见矢量文字</small></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="card settings-card">
+            <div class="card-heading">
+              <div><span class="kicker">朗读设置</span><h2>整理成怎样的电子书？</h2></div>
+              <select id="presetSelect" class="preset-select" aria-label="预设">
+                <option value="novel">中文小说听书</option>
+                <option value="prose">散文与论述</option>
+                <option value="archive">忠实保留全部内容</option>
+                <option value="custom">自定义</option>
+              </select>
+            </div>
+
+            <div class="setting-section">
+              <h3>内容与版式</h3>
+              <div class="form-grid">
+                <label class="select-control"><span><b>朗读排版</b><small>小说模式保留人物换段，合并同一段台词的视觉换行</small></span><select id="readingProfile"><option value="auto">自动判断</option><option value="novel" selected>小说 / 对话优先</option><option value="prose">散文 / 论述优先</option></select></label>
+                <label class="select-control"><span><b>正文起始</b><small>自动跳过封面、版权页与目录，也可指定 PDF 页</small></span><select id="contentStartMode"><option value="auto" selected>自动寻找正文</option><option value="all">朗读全部页面</option><option value="page">从指定页开始</option></select></label>
+                <label id="startPageRow" class="select-control inactive"><span><b>指定 PDF 页</b><small>按 PDF 文件本身的页码填写</small></span><input id="contentStartPage" type="number" min="1" placeholder="例如 23" /></label>
+                <label class="select-control scan-setting"><span><b>PP-OCRv6 模型</b><small>Medium 准确率最高，模型已缓存时不会重复下载</small></span><select id="modelTier"><option value="medium" selected>Medium · 高准确率</option><option value="small">Small · 平衡</option><option value="tiny">Tiny · 快速</option></select></label>
+                <label class="select-control scan-setting"><span><b>识别分辨率</b><small>300 DPI 适合大多数中文书，小字可提高</small></span><select id="oversample"><option value="240">240 DPI</option><option value="300" selected>300 DPI</option><option value="360">360 DPI</option><option value="450">450 DPI</option></select></label>
+                <label class="select-control scan-setting"><span><b>最低置信度</b><small>低于阈值的文字只进入复核报告，不进入朗读层</small></span><input id="scoreThreshold" type="number" min="0" max="1" step="0.05" value="0.45" /></label>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <h3>自动清理</h3>
+              <div class="toggle-grid">
+                <label><input id="filterMargins" type="checkbox" checked /><span><b>忽略页码和页眉页脚</b><small>过滤重复书名和粘连页码</small></span></label>
+                <label><input id="dropFootnotes" type="checkbox" checked /><span><b>不朗读脚注与译注</b><small>页面外观仍会完整保留</small></span></label>
+                <label><input id="skipToc" type="checkbox" checked /><span><b>目录不进入朗读层</b><small>目录页仍留在 PDF 中</small></span></label>
+                <label><input id="dropCitationLines" type="checkbox" checked /><span><b>忽略题记出处</b><small>保留题记正文，跳过来源行</small></span></label>
+                <label><input id="dropCreditLines" type="checkbox" checked /><span><b>忽略独立署名</b><small>跳过“某某著 / 译”等行</small></span></label>
+                <label><input id="dropDiagramLabels" type="checkbox" checked /><span><b>过滤图表碎片</b><small>删除孤立 x1、y2 等标签</small></span></label>
+                <label><input id="mergeContinuousPages" type="checkbox" checked /><span><b>合并跨页未完句</b><small>修复“评｜论”“他知｜道”</small></span></label>
+                <label><input id="keepTitlePage" type="checkbox" checked /><span><b>保留章节扉页标题</b><small>空白页会自动忽略</small></span></label>
+                <label><input id="rotatePages" type="checkbox" checked /><span><b>检测页面方向</b><small>自动处理横置或倒置页面</small></span></label>
+              </div>
+            </div>
+
+            <details class="advanced-panel">
+              <summary>兼容模式与输出选项</summary>
+              <div class="advanced-content">
+                <div class="language-block"><span><b>识别语言</b><small>只选择书中实际出现的语言</small></span><div class="language-grid">
+                  <label><input type="checkbox" value="chi_sim" checked />简体中文</label>
+                  <label><input type="checkbox" value="eng" checked />英文</label>
+                  <label><input type="checkbox" value="chi_tra" />繁体中文</label>
+                  <label><input type="checkbox" value="fra" />法语 / 拉丁字母</label>
+                  <label><input type="checkbox" value="jpn" />日语</label>
+                </div></div>
+                <p id="languageWarning" class="inline-warning hidden"></p>
+                <div class="toggle-grid compact">
+                  <label><input id="readingOptimized" type="checkbox" checked /><span><b>Readest 连续朗读优化</b><small>扫描书与仅整理模式固定启用</small></span></label>
+                  <label><input id="exportText" type="checkbox" checked /><span><b>导出整理后的 TXT</b><small>便于快速核对实际朗读内容</small></span></label>
+                  <label><input id="debugReport" type="checkbox" checked /><span><b>导出识别报告</b><small>生成 JSON 与低置信度清单</small></span></label>
+                  <label class="legacy-only"><input id="deskew" type="checkbox" checked /><span><b>兼容模式纠斜</b><small>OCRmyPDF 使用</small></span></label>
+                  <label class="legacy-only"><input id="clean" type="checkbox" /><span><b>兼容模式清理噪点</b><small>仅增强识别输入</small></span></label>
+                  <label class="legacy-only"><input id="removeBackground" type="checkbox" /><span><b>兼容模式去底色</b><small>可能改变页面，默认关闭</small></span></label>
+                </div>
+                <div class="form-grid legacy-only">
+                  <label class="select-control"><span><b>文件优化</b><small>OCRmyPDF 输出压缩级别</small></span><select id="optimize"><option value="0">不优化</option><option value="1" selected>安全优化</option><option value="3">强力压缩</option></select></label>
+                  <label class="select-control"><span><b>并行任务</b><small>留空由系统自动决定</small></span><input id="jobs" type="number" min="1" max="16" placeholder="自动" /></label>
+                </div>
+                <p id="engineWarning" class="inline-warning hidden"></p>
+                <p id="optimizerWarning" class="inline-warning hidden"></p>
+              </div>
+            </details>
+          </section>
+        </div>
+
+        <aside class="right-column">
+          <section class="card run-card sticky-card">
+            <div class="run-heading"><div><span class="kicker">处理状态</span><h2 id="statusTitle">等待文件</h2></div><span id="pageCounter" class="counter">—</span></div>
+            <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+            <p id="statusMessage" class="status-message">选择 PDF 后，软件会先给出处理建议。</p>
+
+            <div id="engineHelp" class="environment-box hidden">
+              <div class="environment-title"><span>!</span><strong>本地组件尚未完整安装</strong></div>
+              <p>点击下面的按钮，会在 Terminal 中安装 OCRmyPDF、Tesseract、PaddleOCR 和私有 Python 环境。</p>
+              <button id="installButton" class="button secondary full" type="button">安装缺失组件</button>
+              <button id="recheckButton" class="text-button" type="button">安装后重新检查</button>
+            </div>
+
+            <div class="summary-box">
+              <div><span>实际执行</span><strong id="runModeSummary">尚未选择</strong></div>
+              <div><span>输出内容</span><strong id="runOutputSummary">PDF + TXT + 报告</strong></div>
+            </div>
+
+            <div class="action-stack">
+              <button id="startButton" class="button primary full" type="button" disabled><span>开始生成 Readest 版</span><kbd>⌘ ↵</kbd></button>
+              <button id="cancelButton" class="button danger full hidden" type="button">取消处理</button>
+            </div>
+
+            <div id="resultActions" class="result-actions hidden">
+              <button id="openResultButton" class="button secondary" type="button">打开 PDF</button>
+              <button id="openTextButton" class="button ghost hidden" type="button">查看 TXT</button>
+              <button id="revealButton" class="button ghost" type="button">在 Finder 中显示</button>
+            </div>
+
+            <details class="log-panel">
+              <summary>查看处理日志 <button id="clearLogButton" class="text-button" type="button">清空</button></summary>
+              <pre id="logOutput">PDF Text Repair v0.2.2 已启动。</pre>
+            </details>
+            <p class="privacy-note">所有 OCR 和文字整理都在本机完成，原始 PDF 永远不会被覆盖。</p>
+          </section>
+        </aside>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

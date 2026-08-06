@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "PDF Text Repair",
+  "version": "0.2.2",
+  "identifier": "io.github.pdftextrepair.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "PDF Text Repair",
+        "width": 1180,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 680,
+        "resizable": true,
+        "center": true,
+        "dragDropEnabled": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Utility",
+    "shortDescription": "Repair PDF text layers for search and smooth Readest narration.",
+    "longDescription": "PDF Text Repair analyzes scanned books, broken font mappings, mixed PDFs, and existing text layers, then creates searchable PDFs with a locally generated continuous reading layer for Readest.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    },
+    "resources": [
+      "resources/readest_text_layer.py",
+      "resources/paddle_scan_pipeline.py",
+      "resources/pdf_analyze.py",
+      "resources/install-ocr-engine-macos.command"
+    ]
+  }
+}
